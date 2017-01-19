@@ -11,9 +11,9 @@ precision = "float"; traceLevel = 1 ; deviceId = "auto"
 rootDir = ".." ; dataDir = "$rootDir$/DataSets/MNIST" ;
 outputDir = "./Output" ;
 
-modelPath = "$outputDir$/Models/07_Deconvolution.model"
-#stderr = "$outputDir$/07_Deconvolution_bs_out.txt"
-makemode=false
+modelPath = "$outputDir$/Models/07_Deconvolution_BS.model"
+#stderr = "$outputDir$/07_Deconvolution_BS_out.txt"
+#makemode=false
 
 # TRAINING CONFIG
 trainNetwork = {
