@@ -31,21 +31,22 @@ def deconv_mnist(debug_output=False):
     input_dim = image_height * image_width * num_channels
     num_output_classes = 10
 
-    # Input variables denoting the features and label data
+    # Input variable and normalization
     input_var = cntk.ops.input_variable((num_channels, image_height, image_width), np.float32)
     scaled_input = cntk.ops.element_times(cntk.ops.constant(0.00390625), input_var)
 
     # Define the auto encoder model
-    conv1   = cntk.layers.Convolution((5,5), 1, pad=True, activation=cntk.ops.relu)(scaled_input)
-    pool1   = cntk.layers.MaxPooling((4,4), (4,4))(conv1)
-    unpool1 = cntk.layers.MaxUnpooling((4,4), (4,4))(pool1, conv1)
-    z       = cntk.layers.Deconvolution((5,5), 1, 1, lower_pad=(0,2,2), upper_pad=(0,2,2), bias=False, init=cntk.glorot_uniform(0.001))(unpool1)
+    cMap = 3
+    conv1   = cntk.layers.Convolution  ((5,5), cMap, pad=True, activation=cntk.ops.relu)(scaled_input)
+    pool1   = cntk.layers.MaxPooling   ((4,4), (4,4))(conv1)
+    unpool1 = cntk.layers.MaxUnpooling ((4,4), (4,4))(pool1, conv1)
+    z       = cntk.layers.Deconvolution((5,5), num_channels, cMap, lower_pad=(0,2,2), upper_pad=(0,2,2), bias=False, init=cntk.glorot_uniform(0.001))(unpool1)
 
-    # rmse loss function (should be 'err = cntk.ops.minus(deconv1, scaled_input)')
-    f2 = cntk.ops.element_times(cntk.ops.constant(0.00390625), input_var)
-    err = cntk.ops.reshape(cntk.ops.minus(z, f2), (784))
-    sq_err = cntk.ops.element_times(err, err)
-    mse = cntk.ops.reduce_mean(sq_err)
+    # define rmse loss function (should be 'err = cntk.ops.minus(deconv1, scaled_input)')
+    f2        = cntk.ops.element_times(cntk.ops.constant(0.00390625), input_var)
+    err       = cntk.ops.reshape(cntk.ops.minus(z, f2), (784))
+    sq_err    = cntk.ops.element_times(err, err)
+    mse       = cntk.ops.reduce_mean(sq_err)
     rmse_loss = cntk.ops.sqrt(mse)
     rmse_eval = cntk.ops.sqrt(mse)
 
@@ -84,7 +85,14 @@ def deconv_mnist(debug_output=False):
         progress_printer.epoch_summary(with_metric=True)
         z.save_model(os.path.join(model_path, "07_Deconvolution_PY_{}.model".format(epoch)))
 
-    os.rename(os.path.join(model_path, "07_Deconvolution_PY_{}.model".format(max_epochs - 1)), os.path.join(model_path, "07_Deconvolution_PY.model"))
+    # rename final model
+    last_model_name = os.path.join(model_path, "07_Deconvolution_PY_{}.model".format(max_epochs - 1))
+    final_model_name = os.path.join(model_path, "07_Deconvolution_PY.model")
+    try:
+        os.remove(final_model_name)
+    except OSError:
+        pass
+    os.rename(last_model_name, final_model_name)
     
     # Load test data
     reader_test = create_reader(os.path.join(data_path, 'Test-28x28_cntk_text.txt'), False, input_dim, num_output_classes)
