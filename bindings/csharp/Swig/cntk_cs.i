@@ -489,7 +489,7 @@
     // and resulting in dangling access to device.
     private static DeviceDescriptorVector deviceVector;
     private static System.Collections.Generic.List<DeviceDescriptor> deviceList;
-    private static System.Object lockObj = new System.Object();
+    private static System.Object deviceVectorInitLock = new System.Object();
 
     public uint Id
     {
@@ -518,7 +518,7 @@
 
     public static System.Collections.Generic.List<DeviceDescriptor> AllDevices()
     {
-        lock (lockObj)
+        lock (deviceVectorInitLock)
         {
             // TODO: support devices added/removed after creation. 
             if (deviceVector == null)
